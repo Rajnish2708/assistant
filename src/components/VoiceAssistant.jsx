@@ -32,8 +32,6 @@ const VoiceAssistant = ({
 
       const data = await response.json();
 
-      console.log("data------>",data)
-
       let botReply = "";
 
       if (Array.isArray(data) && data.length > 0 && data[0].generated_text) {
@@ -41,10 +39,8 @@ const VoiceAssistant = ({
       } else if (data.generated_text) {
         botReply = data.generated_text;
       } else {
-        botReply = `Sorry, I couldn't understand that.`;
+        botReply = `Sorry, I couldn't understand that. Please try again.`;
       }
-
-      console.log("Bot:", botReply);
 
       onCaptionUpdate(botReply);
       onSpeakStart();

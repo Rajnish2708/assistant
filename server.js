@@ -17,7 +17,7 @@ app.post("/huggingface", async (req, res) => {
     const response = await fetch("https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1", {
       method: "POST",
       headers: {
-        Authorization: "Bearer ",
+        Authorization: "Bearer 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",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ inputs: userInput }),

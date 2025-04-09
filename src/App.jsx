@@ -63,9 +63,6 @@ function App() {
     setCurrentCaption(filtered[0]);
     setTypedText('');
   };
-  
-  console.log(typedText);
-  
 
   return (
     <div style={{ display: 'flex', height: '100vh', margin: 0 }}>
