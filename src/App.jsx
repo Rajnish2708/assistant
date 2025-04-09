@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Environment } from '@react-three/drei';
 import Avatar from './components/Avatar';
@@ -10,48 +10,61 @@ function App() {
   const [currentCaption, setCurrentCaption] = useState('');
   const [typedText, setTypedText] = useState('');
 
-  // Typing effect
+  const typingTimeoutRef = useRef(null);
+  const typingIntervalRef = useRef(null);
+
+  // Typing Effect
   useEffect(() => {
     if (!currentCaption) return;
 
     let charIndex = 0;
     setTypedText('');
-    const typingInterval = setInterval(() => {
-      setTypedText((prev) => prev + currentCaption[charIndex]);
-      charIndex++;
-      if (charIndex >= currentCaption.length) clearInterval(typingInterval);
-    }, 30); // typing speed
 
-    return () => clearInterval(typingInterval);
+    typingIntervalRef.current = setInterval(() => {
+      if (charIndex < currentCaption.length) {
+        const nextChar = currentCaption[charIndex];
+        if (nextChar !== undefined) {
+          console.log('Typing:', nextChar);
+          setTypedText((prev) => prev + nextChar);
+          charIndex++;
+        }
+      } else {
+        clearInterval(typingIntervalRef.current);
+      }
+    }, 30);
+
+    return () => clearInterval(typingIntervalRef.current);
   }, [currentCaption]);
 
-  // Queue next sentence after typing finishes
+  // Advance to next caption when typing is complete
   useEffect(() => {
-    if (typedText === currentCaption && captionQueue.length > 0) {
-      const timeout = setTimeout(() => {
-        const next = captionQueue.shift();
-        setCurrentCaption(next || '');
-        setCaptionQueue([...captionQueue]);
-      }, 2000); // wait before next sentence
-      return () => clearTimeout(timeout);
-    }
-  }, [typedText]);
+    if (typedText === currentCaption && captionQueue.length > 1) {
+      typingTimeoutRef.current = setTimeout(() => {
+        const [, ...remainingQueue] = captionQueue;
+        setCaptionQueue(remainingQueue);
+        setCurrentCaption(remainingQueue[0] || '');
+      }, 2000);
 
+      return () => clearTimeout(typingTimeoutRef.current);
+    }
+  }, [typedText, currentCaption, captionQueue]);
+
+  // Caption handler from voice assistant
   const handleCaptionUpdate = (fullText) => {
-    // 1. Remove any undefined/null
-    if (!fullText || typeof fullText !== 'string') return;  
+    if (!fullText || typeof fullText !== 'string' || fullText === 'undefined') return;
   
-    // 2. Clean extra whitespace and split by punctuation
     const cleanedText = fullText.trim().replace(/\s+/g, ' ');
     const sentences = cleanedText.match(/[^.!?]+[.!?]?/g) || [cleanedText];
+    const filtered = sentences.map((s) => s.trim()).filter(Boolean);
   
-    // 3. Filter out empty strings and reset caption queue
-    const filtered = sentences.map(s => s.trim()).filter(Boolean);
+    if (filtered.length === 0) return;
   
     setCaptionQueue(filtered);
-    setCurrentCaption(filtered[0] || '');
+    setCurrentCaption(filtered[0]);
     setTypedText('');
   };
+  
+  console.log(typedText);
   
 
   return (
@@ -69,7 +82,7 @@ function App() {
           <OrbitControls enablePan={false} />
         </Canvas>
 
-        {/* Caption Typing Display */}
+        {/* Caption Display */}
         {typedText && (
           <div
             style={{
@@ -94,7 +107,7 @@ function App() {
         )}
       </div>
 
-      {/* Voice Assistant UI */}
+      {/* Voice Assistant Panel */}
       <div
         style={{
           flex: 0.4,
@@ -106,7 +119,7 @@ function App() {
         <VoiceAssistant
           onSpeakStart={() => setIsTalking(true)}
           onSpeakEnd={() => setIsTalking(false)}
-          onCaptionUpdate={handleCaptionUpdate} // updated
+          onCaptionUpdate={handleCaptionUpdate}
         />
       </div>
     </div>

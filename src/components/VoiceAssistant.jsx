@@ -41,11 +41,10 @@ const VoiceAssistant = ({
       } else if (data.generated_text) {
         botReply = data.generated_text;
       } else {
-        botReply = "Sorry, I couldn't understand.";
+        botReply = `Sorry, I couldn't understand that.`;
       }
 
       console.log("Bot:", botReply);
-
 
       onCaptionUpdate(botReply);
       onSpeakStart();
