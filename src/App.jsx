@@ -24,7 +24,7 @@ function App() {
       if (charIndex < currentCaption.length) {
         const nextChar = currentCaption[charIndex];
         if (nextChar !== undefined) {
-          console.log('Typing:', nextChar);
+          // console.log('Typing:', nextChar);
           setTypedText((prev) => prev + nextChar);
           charIndex++;
         }

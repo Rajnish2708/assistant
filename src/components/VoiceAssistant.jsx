@@ -1,10 +1,11 @@
+import axios from "axios";
 import React, { useState, useRef } from "react";
 import { useSpeechSynthesis, useSpeechRecognition } from "react-speech-kit";
 
 const VoiceAssistant = ({
-  onSpeakStart = () => {},
-  onSpeakEnd = () => {},
-  onCaptionUpdate = () => {},
+  onSpeakStart = () => { },
+  onSpeakEnd = () => { },
+  onCaptionUpdate = () => { },
 }) => {
   const [text, setText] = useState("");
   const [isListening, setIsListening] = useState(false);
@@ -20,6 +21,30 @@ const VoiceAssistant = ({
     },
   });
 
+  // voices.map((voice) => {
+  //   console.log("Voice:", voice);
+  // })
+
+  const selectedVoice22 = voices.find((v) =>
+    v.lang.toLowerCase().includes("te")
+  );
+  console.log("selectedVoice", selectedVoice22);
+  
+
+  const useJasperAI = async (language, text) => {
+    try {
+      const payload = {
+        language: language,
+        text: text
+      };
+
+      const response = await axios.post("http://localhost:5000/jasper", payload);
+      return response.data;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const handleHuggingFaceReply = async (userInput) => {
     try {
       const response = await fetch("http://localhost:5000/huggingface", {
@@ -32,22 +57,28 @@ const VoiceAssistant = ({
 
       const data = await response.json();
 
-      let botReply = "";
-
+      let botReply = null;
       if (Array.isArray(data) && data.length > 0 && data[0].generated_text) {
         botReply = data[0].generated_text;
       } else if (data.generated_text) {
         botReply = data.generated_text;
       } else {
         botReply = `Sorry, I couldn't understand that. Please try again.`;
-      }
+      };
+      console.log("Bot Reply:", botReply);
+      const dastas = await useJasperAI("hindi", botReply);
+      console.log("Jasper AI Response:", dastas);
+
+      botReply = dastas.data[0].text;
 
       onCaptionUpdate(botReply);
       onSpeakStart();
 
       const selectedVoice = voices.find((v) =>
-        v.lang.toLowerCase().includes("en")
+        v.lang.toLowerCase().includes("hi")
       );
+
+      console.log("selectedVoice", selectedVoice);
 
       speak({
         text: botReply,
@@ -57,6 +88,7 @@ const VoiceAssistant = ({
           setTimeout(() => onCaptionUpdate(""), 3000);
         },
       });
+
     } catch (error) {
       console.error("Hugging Face Error:", error);
       speak({
